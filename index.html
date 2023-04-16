@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>One-on-One Chat</title>
+</head>
+<body>
+	<div class="chat-container">
+		<div class="chat-message">
+			<p>Hi there! Welcome to the most advanced AI chat ever.</p>
+		</div>
+	</div>
+	<div class="chat-form">
+		<form>
+			<input type="text" class="chat-input" id="chat-input" placeholder="Type your message here...">
+			<button type="submit" class="chat-submit" id="chat-submit">Send</button>
+		</form>
+	</div>
+	<script type="text/javascript">
+		var form = document.querySelector('form');
+		var input = document.querySelector('#chat-input');
+		var container = document.querySelector('.chat-container');
+
+		// Connect to the database
+		var conn = new XMLHttpRequest();
+		conn.open('GET', 'https://sql9.freemysqlhosting.net:3306/sql9613144');
+		conn.send();
+
+		form.addEventListener('submit', function(e) {
+			e.preventDefault();
+
+			var message = input.value;
+			if (message.trim() != '') {
+				// Insert message into database
+				var insertQuery = 'INSERT INTO messages (message, status) VALUES ("' + message + '", 0)';
+				conn.open('GET', 'https://sql9.freemysqlhosting.net:3306/sql9613144?query=' + encodeURIComponent(insertQuery));
+				conn.send();
+
+				// Add message to the chat container
+				var chatMessage = document.createElement('div');
+				chatMessage.classList.add('chat-message');
+				chatMessage.innerHTML = '<p>' + message + '</p>';
+				container.appendChild(chatMessage);
+				input.value = '';
+				container.scrollTop = container.scrollHeight;
+			}
+		});
+
+        var getMessages = function() {
+    var selectQuery = 'SELECT * FROM messages';
+    conn.open('GET', 'https://sql9.freemysqlhosting.net:3306/sql9613144?query=' + encodeURIComponent(selectQuery));
+    conn.onreadystatechange = function() {
+        if (conn.readyState == 4 && conn.status == 200) {
+            var response = JSON.parse(conn.responseText);
+            for (var i = 0; i < response.length; i++) {
+                var chatMessage = document.createElement('div');
+                chatMessage.classList.add('chat-message');
+                chatMessage.innerHTML = '<p>' + response[i].message + '</p>';
+                container.appendChild(chatMessage);
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+    };
+    conn.send();
+};
+
+// Call getMessages() when the page loads to fetch existing messages from the database
+window.onload = function() {
+    getMessages();
+};
+
+form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    var message = input.value;
+    if (message.trim() != '') {
+        // Insert message into database
+        var insertQuery = 'INSERT INTO messages (message, status) VALUES ("' + message + '", 0)';
+        conn.open('GET', 'https://sql9.freemysqlhosting.net:3306/sql9613144?query=' + encodeURIComponent(insertQuery));
+        conn.send();
+
+        // Add message to the chat container
+        var chatMessage = document.createElement('div');
+        chatMessage.classList.add('chat-message');
+        chatMessage.innerHTML = '<p>' + message + '</p>';
+        container.appendChild(chatMessage);
+        input.value = '';
+        container.scrollTop = container.scrollHeight;
+    }
+});
+
+	</script>
+</body>
+</html>
