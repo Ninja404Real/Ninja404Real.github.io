@@ -1,93 +1,77 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>One-on-One Chat</title>
+  <title>Country Currency</title>
 </head>
 <body>
-	<div class="chat-container">
-		<div class="chat-message">
-			<p>Hi there! Welcome to the most advanced AI chat ever.</p>
-		</div>
-	</div>
-	<div class="chat-form">
-		<form>
-			<input type="text" class="chat-input" id="chat-input" placeholder="Type your message here...">
-			<button type="submit" class="chat-submit" id="chat-submit">Send</button>
-		</form>
-	</div>
-	<script type="text/javascript">
-		var form = document.querySelector('form');
-		var input = document.querySelector('#chat-input');
-		var container = document.querySelector('.chat-container');
+  <h1>Country Information</h1>
+  <p id="country"></p>
 
-		// Connect to the database
-		var conn = new XMLHttpRequest();
-		conn.open('GET', 'https://sql9.freemysqlhosting.net:3306/sql9613144');
-		conn.send();
+  <h2>Convert Currency</h2>
+  <label for="amount" id="amountLabel">Amount:</label>
+  <input type="text" id="amount" placeholder="Enter amount">
+  <button onclick="convertCurrency()">Convert</button>
+  <p id="convertedAmount"></p>
 
-		form.addEventListener('submit', function(e) {
-			e.preventDefault();
-
-			var message = input.value;
-			if (message.trim() != '') {
-				// Insert message into database
-				var insertQuery = 'INSERT INTO messages (message, status) VALUES ("' + message + '", 0)';
-				conn.open('GET', 'https://sql9.freemysqlhosting.net:3306/sql9613144?query=' + encodeURIComponent(insertQuery));
-				conn.send();
-
-				// Add message to the chat container
-				var chatMessage = document.createElement('div');
-				chatMessage.classList.add('chat-message');
-				chatMessage.innerHTML = '<p>' + message + '</p>';
-				container.appendChild(chatMessage);
-				input.value = '';
-				container.scrollTop = container.scrollHeight;
-			}
-		});
-
-        var getMessages = function() {
-    var selectQuery = 'SELECT * FROM messages';
-    conn.open('GET', 'https://sql9.freemysqlhosting.net:3306/sql9613144?query=' + encodeURIComponent(selectQuery));
-    conn.onreadystatechange = function() {
-        if (conn.readyState == 4 && conn.status == 200) {
-            var response = JSON.parse(conn.responseText);
-            for (var i = 0; i < response.length; i++) {
-                var chatMessage = document.createElement('div');
-                chatMessage.classList.add('chat-message');
-                chatMessage.innerHTML = '<p>' + response[i].message + '</p>';
-                container.appendChild(chatMessage);
-                container.scrollTop = container.scrollHeight;
-            }
-        }
-    };
-    conn.send();
-};
-
-// Call getMessages() when the page loads to fetch existing messages from the database
-window.onload = function() {
-    getMessages();
-};
-
-form.addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    var message = input.value;
-    if (message.trim() != '') {
-        // Insert message into database
-        var insertQuery = 'INSERT INTO messages (message, status) VALUES ("' + message + '", 0)';
-        conn.open('GET', 'https://sql9.freemysqlhosting.net:3306/sql9613144?query=' + encodeURIComponent(insertQuery));
-        conn.send();
-
-        // Add message to the chat container
-        var chatMessage = document.createElement('div');
-        chatMessage.classList.add('chat-message');
-        chatMessage.innerHTML = '<p>' + message + '</p>';
-        container.appendChild(chatMessage);
-        input.value = '';
-        container.scrollTop = container.scrollHeight;
+  <script>
+    function getCountry() {
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(async function(position) {
+          const { latitude, longitude } = position.coords;
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+          const data = await response.json();
+          let country = data.address.country;
+          if (country === "日本") {
+            country = "Japan";
+          }
+          document.getElementById("country").innerText = "You are in: " + country;
+          // Set the label text based on the detected country
+          let amountLabel;
+          if (country === "India") {
+            amountLabel = "Amount in Rupees:";
+          } else if (country === "Thailand") {
+            amountLabel = "Amount in Thai Bhat:";
+          } else if (country === "Indonesia") {
+            amountLabel = "Amount in Indonesian Rupiah:";
+          } else if (country === "Australia") {
+            amountLabel = "Amount in Australian Dollar:";
+          } else if (country === "Japan") {
+            amountLabel = "Amount in Japanese Yen:";
+          } else {
+            amountLabel = "Amount:";
+          }
+          document.getElementById("amountLabel").innerText = amountLabel;
+        });
+      } else {
+        document.getElementById("country").innerText = "Geolocation is not supported by your browser.";
+      }
     }
-});
 
-	</script>
+    function convertCurrency() {
+      const amount = document.getElementById("amount").value;
+      const country = document.getElementById("country").innerText.replace("You are in: ", "");
+      let conversionRate;
+
+      // Define conversion rates for specific countries
+      if (country === "India") {
+        conversionRate = 0.012;  // 1 rupee = 0.012 USD
+      } else if (country === "Thailand") {
+        conversionRate = 0.029;  // 1 THB = 0.029 USD
+      } else if (country === "Indonesia") {
+        conversionRate = 0.000067;  // 1 IDR = 0.000067 USD
+      } else if (country === "Australia") {
+        conversionRate = 0.67;  // 1 AUD = 0.67 USD
+      } else if (country === "Japan") {
+        conversionRate = 0.0071;  // 1 JPY = 0.0071 USD
+      } else {
+        conversionRate = 1;  // Default to 1 if the country is not specified
+      }
+
+      const convertedAmount = amount * conversionRate;
+      document.getElementById("convertedAmount").innerText = "Converted Amount: " + convertedAmount.toFixed(2) + " USD";
+    }
+
+    getCountry();
+  </script>
 </body>
 </html>
